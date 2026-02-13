@@ -1,36 +1,50 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginRequest } from "../features/auth/authApi";
-import { useDispatch } from "react-redux";
-import { setToken } from "../features/auth/authSlice";
+
+import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { loginThunk } from "../features/auth/authSlice";
 
 export default function Login() {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
+
+    const {token, loading, error} = useAppSelector(
+        (state: any ) => state.auth
+    )
+    
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
-    async function handleSubmit(e: React.FormEvent) {
+
+    useEffect(() => {
+            if(token) {
+                navigate("/dashboard")
+            }
+        }, [token, navigate])
+
+    async function handleSubmit(e: any ){
+
+
         e.preventDefault();
-        setError(null);
-        setLoading(true);
 
-        try {
-            const data = await loginRequest(email, password);
-            dispatch(setToken(data.access_token));
-            navigate("/dashboard");
-        } catch (err: any) {
-            const msg =
-                err?.response?.data?.detail ??
-                err?.response?.data?.message ??
-                "Falha no login";
-            setError(msg);
-        } finally {
-            setLoading(false);
+        
+        // Validaçãp Local
+        if (!email || !password){
+            return;
         }
+
+        dispatch(
+            loginThunk({
+                username: email,
+                password
+            })
+        );
+        
+        
+
+
+        
     }
 
     return (
